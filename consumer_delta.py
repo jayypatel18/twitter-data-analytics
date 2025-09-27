@@ -8,7 +8,7 @@ from decouple import config
 from delta.tables import *
 
 
-def write_row_in_delta(df):
+def write_row_in_delta(df, batch_id):
     delta_path = config('DELTAPATH')
     df.write.format("delta").mode("append").option("mergeSchema", "true").save(delta_path)
 

@@ -27,7 +27,7 @@ def send_sample_data():
                     data = json.loads(line.strip())
                     print(f"Sending data: {str(data)[:100]}...")
                     producer.send(topic_name, value=json.dumps(data).encode('utf-8'))
-                    time.sleep(0.005)  # Small delay between messages
+                    time.sleep(0.9)  # Small delay between messages
                     
         except Exception as e:
             print(f"Error reading {json_file}: {e}")

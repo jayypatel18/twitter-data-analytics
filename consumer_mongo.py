@@ -9,10 +9,15 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-def write_row_in_mongo(df):
+def write_row_in_mongo(df, batch_id):
     mongo_uri = os.getenv('MONGOACCESS')
-
-    df.write.format("mongo").mode("append").option("uri", mongo_uri).save()
+    
+    df.write.format("mongodb") \
+        .mode("append") \
+        .option("spark.mongodb.connection.uri", mongo_uri) \
+        .option("spark.mongodb.database", "twitter_db") \
+        .option("spark.mongodb.collection", "tweets") \
+        .save()
 
 
 if __name__ == "__main__":
@@ -29,8 +34,7 @@ if __name__ == "__main__":
                 os.getenv('MONGOACCESS')) \
         .config("spark.mongodb.output.uri",
                 os.getenv('MONGOACCESS')) \
-        .config("spark.jars.packages", "org.mongodb.spark:mongo-spark-connector_2.12:3.0.1") \
-        .config("spark.jars.packages", "org.apache.spark:spark-sql-kafka-0-10_2.13:4.0.1") \
+        .config("spark.jars.packages", "org.mongodb.spark:mongo-spark-connector_2.13:10.4.0,org.apache.spark:spark-sql-kafka-0-10_2.13:4.0.1") \
         .getOrCreate()
 
     # Spark Context
