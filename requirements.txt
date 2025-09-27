@@ -1,0 +1,14 @@
+# Core dependencies
+pyspark>=3.1.2
+findspark
+decouple
+kafka-python
+delta-spark
+# For MongoDB support (used in consumer_mongo.py)
+pymongo
+# For Delta Lake support (used in consumer_delta.py)
+delta-spark
+# For Kafka support (used in producer.py, consumer*.py)
+kafka-python
+tweepy
+dotenv
