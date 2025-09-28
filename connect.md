@@ -15,7 +15,7 @@ A real-time Twitter sentiment analysis pipeline using Apache Spark, Kafka, and m
 ### All Machines
 - Java 8 or 11
 - Python 3.8+
-- Apache Spark 4.0.1
+- Apache Spark 3.5.6
 - Apache Kafka
 
 ### Master Node (macOS)
@@ -66,7 +66,7 @@ $SPARK_HOME/sbin/start-master.sh --host YOUR_IP_ADDRESS
 
 1. **Install Java and Spark:**
 - Download and install Java 11
-- Download Apache Spark 4.0.1 and extract
+- Download Apache Spark 3.5.6 and extract
 - Set JAVA_HOME and SPARK_HOME environment variables
 
 2. **Start Spark Worker:**
@@ -106,7 +106,7 @@ spark = SparkSession
     .builder 
     .master("spark://YOUR_MASTER_IP:7077") 
     .appName("TwitterSentimentAnalysis") 
-    .config("spark.jars.packages", "org.apache.spark:spark-sql-kafka-0-10_2.13:4.0.1") 
+    .config("spark.jars.packages", "org.apache.spark:spark-sql-kafka-0-10_2.13:3.5.6") 
     .getOrCreate()
 ```
 
@@ -199,7 +199,7 @@ kafka-console-consumer --bootstrap-server localhost:9092 --topic twitter --from-
 3. **Version Compatibility**
    - Use same Spark version across all nodes
    - Ensure Java versions are compatible
-   - Check Scala version (2.13 for Spark 4.0.1)
+   - Check Scala version (2.13 for Spark 3.5.6)
 
 ### Firewall Configuration
 

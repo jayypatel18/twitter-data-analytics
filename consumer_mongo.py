@@ -34,7 +34,7 @@ if __name__ == "__main__":
                 os.getenv('MONGOACCESS')) \
         .config("spark.mongodb.output.uri",
                 os.getenv('MONGOACCESS')) \
-        .config("spark.jars.packages", "org.mongodb.spark:mongo-spark-connector_2.13:10.4.0,org.apache.spark:spark-sql-kafka-0-10_2.13:4.0.1") \
+        .config("spark.jars.packages", "org.mongodb.spark:mongo-spark-connector_2.12:10.4.0,org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.6") \
         .getOrCreate()
 
     # Spark Context

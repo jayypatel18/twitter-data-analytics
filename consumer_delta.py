@@ -24,7 +24,7 @@ if __name__ == "__main__":
         .master("local[*]") \
         .appName("TwitterSentimentAnalysis") \
         .config("spark.jars.packages", "io.delta:delta-spark_2.13:3.2.1") \
-        .config("spark.jars.packages", "org.apache.spark:spark-sql-kafka-0-10_2.13:4.0.1") \
+        .config("spark.jars.packages", "org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.6") \
         .getOrCreate()
 
     # Spark Context
