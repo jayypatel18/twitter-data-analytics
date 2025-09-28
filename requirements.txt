@@ -1,5 +1,5 @@
 # Core dependencies
-pyspark>=3.1.2
+pyspark==3.5.6
 findspark
 decouple
 kafka-python
