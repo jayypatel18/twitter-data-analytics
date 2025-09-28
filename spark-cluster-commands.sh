@@ -49,6 +49,45 @@ $SPARK_HOME/sbin/start-master.sh --host YOUR_IP_ADDRESS
 # & "$env:SPARK_HOME\bin\spark-class.cmd" org.apache.spark.deploy.worker.Worker spark://MASTER_IP:7077
 
 # -----------------------------------------------------------------------------
+# WORKER NODES (macOS - If Friends Have Mac Laptops)
+# -----------------------------------------------------------------------------
+
+# Commands for macOS (run in Terminal):
+
+# 1. Start Worker Node 1
+# $SPARK_HOME/sbin/start-worker.sh spark://MASTER_IP:7077
+
+# 2. Alternative: Start worker with specific options
+# $SPARK_HOME/sbin/start-worker.sh --cores 2 --memory 2g spark://MASTER_IP:7077
+
+# Example with full path:
+# /opt/homebrew/Cellar/apache-spark1/3.5.6/sbin/start-worker.sh spark://192.168.1.100:7077
+
+# Or if using Homebrew Spark:
+# /usr/local/bin/spark-class org.apache.spark.deploy.worker.Worker spark://192.168.1.100:7077
+
+# Stop worker (when needed):
+# $SPARK_HOME/sbin/stop-worker.sh
+
+# -----------------------------------------------------------------------------
+# WORKER NODES (Linux - If Using Linux Systems)
+# -----------------------------------------------------------------------------
+
+# Commands for Linux (run in Terminal):
+
+# 1. Start Worker Node
+# $SPARK_HOME/sbin/start-worker.sh spark://MASTER_IP:7077
+
+# 2. With specific configuration
+# $SPARK_HOME/sbin/start-worker.sh --cores 4 --memory 4g spark://MASTER_IP:7077
+
+# Example:
+# /opt/spark/sbin/start-worker.sh spark://192.168.1.100:7077
+
+# Stop worker:
+# $SPARK_HOME/sbin/stop-worker.sh
+
+# -----------------------------------------------------------------------------
 # CONSUMER APPLICATION
 # -----------------------------------------------------------------------------
 
@@ -82,6 +121,12 @@ $SPARK_HOME/sbin/start-master.sh --host YOUR_IP_ADDRESS
 # - Streaming statistics
 # - Performance metrics
 
+# Worker UI (for each worker node):
+# http://WORKER_IP:8081
+# - Individual worker status
+# - Resource usage
+# - Running executors
+
 # -----------------------------------------------------------------------------
 # FIREWALL SETUP
 # -----------------------------------------------------------------------------
@@ -91,9 +136,18 @@ $SPARK_HOME/sbin/start-master.sh --host YOUR_IP_ADDRESS
 # sudo ufw allow 8080  # Master UI port
 # sudo ufw allow 4040  # Application UI port
 
+# macOS (Workers) - If using Mac as worker nodes
+# sudo ufw allow 7077  # Worker communication port
+# sudo ufw allow 8081  # Worker UI port (default)
+
 # Windows (Workers) - Open Windows Firewall
 # - Allow Java applications through firewall
 # - Ensure network profile is set to Private
+# - Open ports: 7077, 8081
+
+# Linux (Workers) - Firewall setup
+# sudo ufw allow 7077  # Worker communication port
+# sudo ufw allow 8081  # Worker UI port
 
 # -----------------------------------------------------------------------------
 # TROUBLESHOOTING
