@@ -1,3 +1,4 @@
+import os
 import re
 import json
 import findspark
@@ -15,8 +16,16 @@ class EmotionAnalysisConsumer:
     def __init__(self):
         findspark.init()
         
-        # MongoDB connection
-        self.mongo_client = MongoClient('mongodb://localhost:27017/')
+        # Initialize cumulative counters
+        self.total_tweets_processed = 0
+        self.total_high_confidence = 0
+        
+        # MongoDB connection - Use environment variable or default to localhost
+        mongo_host = os.getenv('MONGO_HOST', 'localhost')
+        mongo_port = int(os.getenv('MONGO_PORT', '27017'))
+        
+        print(f"Connecting to MongoDB at {mongo_host}:{mongo_port}")
+        self.mongo_client = MongoClient(f'mongodb://{mongo_host}:{mongo_port}/')
         self.db = self.mongo_client['twitter_emotions']
         self.collection = self.db['emotion_analysis']
         
@@ -68,44 +77,53 @@ class EmotionAnalysisConsumer:
     
     def analyze_emotion_trends(self, df, epoch_id):
         """
-        Perform real-time emotion trend analysis
+        Perform real-time emotion trend analysis - Old pandas approach with cumulative counter
         """
         try:
             # Convert to Pandas for analysis
             pandas_df = df.toPandas()
             
             if not pandas_df.empty:
+                # Update cumulative counters
+                batch_size = len(pandas_df)
+                self.total_tweets_processed += batch_size
+                
                 # Emotion distribution
                 emotion_counts = pandas_df['dominant_emotion'].value_counts()
                 
                 # High confidence emotions
                 high_conf_emotions = pandas_df[pandas_df['emotion_confidence'] > 0.7]
+                high_conf_count = len(high_conf_emotions)
+                self.total_high_confidence += high_conf_count
                 
                 # Sentiment distribution
                 sentiment_dist = pandas_df['sentiment_label'].value_counts()
                 
                 print("\n" + "="*50)
-                print("REAL-TIME EMOTION ANALYSIS")
+                print(f"REAL-TIME EMOTION ANALYSIS (Batch {epoch_id})")
                 print("="*50)
-                print(f"Total Tweets Processed: {len(pandas_df)}")
-                print(f"High Confidence Emotions: {len(high_conf_emotions)}")
+                print(f"Batch Size: {batch_size}")
+                print(f"🔢 TOTAL TWEETS PROCESSED: {self.total_tweets_processed}")
+                print(f"🎯 Total High Confidence Emotions: {self.total_high_confidence}")
                 
-                print("\nDominant Emotion Distribution:")
+                print("\nDominant Emotion Distribution (Current Batch):")
                 for emotion, count in emotion_counts.head().items():
                     print(f"  {emotion.upper()}: {count}")
                 
-                print(f"\nSentiment Distribution:")
+                print(f"\nSentiment Distribution (Current Batch):")
                 for sentiment, count in sentiment_dist.items():
                     print(f"  {sentiment.upper()}: {count}")
                 
                 # Find most emotional tweet
                 if not pandas_df.empty:
                     most_emotional = pandas_df.loc[pandas_df['emotion_confidence'].idxmax()]
-                    print(f"\nMost Emotional Tweet:")
+                    print(f"\nMost Emotional Tweet in Batch:")
                     print(f"  Emotion: {most_emotional['dominant_emotion'].upper()} ({most_emotional['emotion_confidence']:.2f})")
                     print(f"  Text: {most_emotional['original_text'][:100]}...")
                 
                 print("="*50 + "\n")
+            else:
+                print(f"\n⚠️  No data received in batch {epoch_id} - waiting for producer data...")
                 
         except Exception as e:
             logger.error(f"Error in emotion trend analysis: {e}")
