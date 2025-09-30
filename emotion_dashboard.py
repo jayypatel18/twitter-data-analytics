@@ -178,20 +178,29 @@ class EmotionDashboard:
         total_high_confidence = real_time_stats.get('total_high_confidence', 0)
         avg_confidence = real_time_stats.get('avg_emotion_confidence', df['emotion_confidence'].mean() if not df.empty else 0)
         
-        # Get most common emotion from current batch stats or fallback to df
-        emotion_dist = real_time_stats.get('emotion_distribution', {})
-        if emotion_dist:
-            most_common_emotion = max(emotion_dist.keys(), key=emotion_dist.get)
+        # Get most common emotion from cumulative stats or fallback to df
+        cumulative_emotion_dist = real_time_stats.get('cumulative_emotion_distribution', {})
+        if cumulative_emotion_dist:
+            most_common_emotion = max(cumulative_emotion_dist.keys(), key=cumulative_emotion_dist.get)
         else:
-            most_common_emotion = df['dominant_emotion'].mode().iloc[0] if not df.empty else "N/A"
+            emotion_dist = real_time_stats.get('current_batch_emotion_distribution', {})
+            if emotion_dist:
+                most_common_emotion = max(emotion_dist.keys(), key=emotion_dist.get)
+            else:
+                most_common_emotion = df['dominant_emotion'].mode().iloc[0] if not df.empty else "N/A"
         
-        # Calculate positive ratio from current batch stats or fallback to df
-        sentiment_dist = real_time_stats.get('sentiment_distribution', {})
-        if sentiment_dist:
-            total_sentiment = sum(sentiment_dist.values())
-            positive_ratio = (sentiment_dist.get('positive', 0) / total_sentiment * 100) if total_sentiment > 0 else 0
+        # Calculate positive ratio from cumulative stats or fallback to df
+        cumulative_sentiment_dist = real_time_stats.get('cumulative_sentiment_distribution', {})
+        if cumulative_sentiment_dist:
+            total_sentiment = sum(cumulative_sentiment_dist.values())
+            positive_ratio = (cumulative_sentiment_dist.get('positive', 0) / total_sentiment * 100) if total_sentiment > 0 else 0
         else:
-            positive_ratio = (df['sentiment_label'] == 'positive').mean() * 100 if not df.empty else 0
+            sentiment_dist = real_time_stats.get('current_batch_sentiment_distribution', {})
+            if sentiment_dist:
+                total_sentiment = sum(sentiment_dist.values())
+                positive_ratio = (sentiment_dist.get('positive', 0) / total_sentiment * 100) if total_sentiment > 0 else 0
+            else:
+                positive_ratio = (df['sentiment_label'] == 'positive').mean() * 100 if not df.empty else 0
         
         stats = [
             html.Div([
@@ -219,14 +228,37 @@ class EmotionDashboard:
     
     def create_emotion_pie_chart(self, df, real_time_stats):
         """
-        Create emotion distribution pie chart using real-time stats
+        Create emotion distribution pie chart using cumulative data from all tweets
         """
-        # Use real-time stats for current batch distribution, fallback to df
-        emotion_dist = real_time_stats.get('emotion_distribution', {})
-        if emotion_dist:
-            emotion_counts = pd.Series(emotion_dist)
+        # First try to get cumulative distribution from real-time stats
+        cumulative_emotion_dist = real_time_stats.get('cumulative_emotion_distribution', {})
+        
+        if cumulative_emotion_dist:
+            emotion_counts = pd.Series(cumulative_emotion_dist)
         else:
-            emotion_counts = df['dominant_emotion'].value_counts()
+            # Fallback: get emotion distribution from all tweets in the database
+            try:
+                pipeline = [
+                    {"$group": {"_id": "$dominant_emotion", "count": {"$sum": 1}}},
+                    {"$sort": {"count": -1}}
+                ]
+                emotion_aggregation = list(self.collection.aggregate(pipeline))
+                
+                if emotion_aggregation:
+                    emotions = [item['_id'] for item in emotion_aggregation if item['_id']]
+                    counts = [item['count'] for item in emotion_aggregation if item['_id']]
+                    emotion_counts = pd.Series(counts, index=emotions)
+                else:
+                    # Final fallback to current batch
+                    current_batch_dist = real_time_stats.get('current_batch_emotion_distribution', {})
+                    if current_batch_dist:
+                        emotion_counts = pd.Series(current_batch_dist)
+                    else:
+                        emotion_counts = df['dominant_emotion'].value_counts()
+            except Exception as e:
+                print(f"Error getting cumulative emotion distribution: {e}")
+                # Final fallback to dataframe
+                emotion_counts = df['dominant_emotion'].value_counts()
         
         colors = {
             'joy': '#f1c40f', 'anger': '#e74c3c', 'fear': '#9b59b6',

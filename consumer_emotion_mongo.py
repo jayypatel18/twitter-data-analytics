@@ -138,16 +138,32 @@ class EmotionAnalysisConsumer:
         Update real-time statistics in MongoDB for dashboard consumption
         """
         try:
-            # Helper function to convert numpy types to Python types
-            def convert_numpy_types(obj):
-                if hasattr(obj, 'item'):  # numpy scalar
-                    return obj.item()
-                elif isinstance(obj, dict):
-                    return {k: convert_numpy_types(v) for k, v in obj.items()}
-                elif isinstance(obj, list):
-                    return [convert_numpy_types(item) for item in obj]
-                else:
-                    return obj
+            # Get cumulative emotion distribution from all data
+            cumulative_emotion_dist = {}
+            cumulative_sentiment_dist = {}
+            
+            try:
+                # Get cumulative emotion distribution
+                emotion_pipeline = [
+                    {"$group": {"_id": "$dominant_emotion", "count": {"$sum": 1}}},
+                    {"$sort": {"count": -1}}
+                ]
+                emotion_aggregation = list(self.collection.aggregate(emotion_pipeline))
+                cumulative_emotion_dist = {item['_id']: item['count'] for item in emotion_aggregation if item['_id']}
+                
+                # Get cumulative sentiment distribution  
+                sentiment_pipeline = [
+                    {"$group": {"_id": "$sentiment_label", "count": {"$sum": 1}}},
+                    {"$sort": {"count": -1}}
+                ]
+                sentiment_aggregation = list(self.collection.aggregate(sentiment_pipeline))
+                cumulative_sentiment_dist = {item['_id']: item['count'] for item in sentiment_aggregation if item['_id']}
+                
+            except Exception as agg_error:
+                logger.warning(f"Error getting cumulative distributions: {agg_error}")
+                # Fallback to current batch only
+                cumulative_emotion_dist = {k: int(v) for k, v in pandas_df['dominant_emotion'].value_counts().to_dict().items()}
+                cumulative_sentiment_dist = {k: int(v) for k, v in pandas_df['sentiment_label'].value_counts().to_dict().items()}
             
             # Create comprehensive stats document
             stats_doc = {
@@ -157,9 +173,13 @@ class EmotionAnalysisConsumer:
                 "total_tweets_processed": int(self.total_tweets_processed),
                 "total_high_confidence": int(self.total_high_confidence),
                 
-                # Current batch emotion distribution (convert numpy int64 to Python int)
-                "emotion_distribution": {k: int(v) for k, v in pandas_df['dominant_emotion'].value_counts().to_dict().items()},
-                "sentiment_distribution": {k: int(v) for k, v in pandas_df['sentiment_label'].value_counts().to_dict().items()},
+                # Current batch distributions
+                "current_batch_emotion_distribution": {k: int(v) for k, v in pandas_df['dominant_emotion'].value_counts().to_dict().items()},
+                "current_batch_sentiment_distribution": {k: int(v) for k, v in pandas_df['sentiment_label'].value_counts().to_dict().items()},
+                
+                # Cumulative distributions (all tweets processed so far)
+                "cumulative_emotion_distribution": cumulative_emotion_dist,
+                "cumulative_sentiment_distribution": cumulative_sentiment_dist,
                 
                 # High confidence emotions in current batch
                 "high_confidence_emotions": int(len(pandas_df[pandas_df['emotion_confidence'] > 0.7])),
