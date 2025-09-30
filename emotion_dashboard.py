@@ -10,13 +10,11 @@ import numpy as np
 
 class EmotionDashboard:
     def __init__(self):
-        # MongoDB connection
         self.mongo_client = MongoClient('mongodb://localhost:27017/')
         self.db = self.mongo_client['twitter_emotions']
         self.collection = self.db['emotion_analysis']
-        self.stats_collection = self.db['real_time_stats']  # Collection for real-time stats
+        self.stats_collection = self.db['real_time_stats']
         
-        # Initialize Dash app
         self.app = dash.Dash(__name__)
         self.setup_layout()
         self.setup_callbacks()
@@ -31,11 +29,9 @@ class EmotionDashboard:
             
             if data:
                 df = pd.DataFrame(data)
-                # Convert timestamp string to datetime
                 df['timestamp'] = pd.to_datetime(df['timestamp'])
                 return df
             else:
-                # Return empty DataFrame with expected columns
                 return pd.DataFrame(columns=[
                     'tweet_id', 'timestamp', 'original_text', 'dominant_emotion',
                     'emotion_confidence', 'sentiment_label', 'topic', 'location',
@@ -54,7 +50,6 @@ class EmotionDashboard:
             if stats_doc:
                 return stats_doc
             else:
-                # Fallback to counting all documents if no real-time stats
                 total_count = self.collection.count_documents({})
                 return {
                     "total_tweets_processed": total_count,
@@ -80,15 +75,13 @@ class EmotionDashboard:
         Setup dashboard layout
         """
         self.app.layout = html.Div([
-            # Header
             html.Div([
-                html.H1("Real-time Twitter Emotion Analysis Dashboard", 
+                html.H1("Real-time X(twitter) Emotion Analysis Dashboard", 
                        style={'textAlign': 'center', 'color': '#2c3e50', 'marginBottom': '30px'}),
-                html.P("Advanced emotion detection beyond basic sentiment analysis", 
+                html.P("Big Data Systems Assignment - Jay, Manav, Chirag", 
                       style={'textAlign': 'center', 'fontSize': '18px', 'color': '#7f8c8d'})
             ], style={'backgroundColor': '#ecf0f1', 'padding': '20px', 'marginBottom': '30px'}),
             
-            # Stats Row
             html.Div(id='stats-row', children=[], style={'marginBottom': '30px'}),
             
             # Main Content
@@ -124,7 +117,7 @@ class EmotionDashboard:
             # Auto-refresh interval
             dcc.Interval(
                 id='interval-component',
-                interval=5*1000,  # Update every 5 seconds
+                interval=2*1000,  # in milliseconds
                 n_intervals=0
             )
         ], style={'backgroundColor': '#f8f9fa', 'padding': '20px', 'fontFamily': 'Arial, sans-serif'})
@@ -141,30 +134,19 @@ class EmotionDashboard:
             Output('live-tweets', 'children')
         ], [Input('interval-component', 'n_intervals')])
         def update_dashboard(n):
-            # Get latest data for visualizations
+
             df = self.get_latest_data()
-            
-            # Get real-time cumulative stats
             real_time_stats = self.get_real_time_stats()
             
             if df.empty:
                 empty_fig = go.Figure()
                 empty_fig.add_annotation(text="No data available", showarrow=False, font=dict(size=20))
                 return [], empty_fig, empty_fig, empty_fig, [html.P("No tweets available", style={'textAlign': 'center', 'color': '#95a5a6'})]
-            
-            # Stats Row (using real-time stats for totals)
+
             stats = self.create_stats_row(df, real_time_stats)
-            
-            # Emotion Pie Chart (using real-time stats for current batch distribution)
             emotion_pie = self.create_emotion_pie_chart(df, real_time_stats)
-            
-            # Emotion Timeline (using historical data)
             emotion_timeline = self.create_emotion_timeline(df)
-            
-            # Topic-Emotion Heatmap
             topic_heatmap = self.create_topic_emotion_heatmap(df)
-            
-            # Live Tweets
             live_tweets = self.create_live_tweets(df)
             
             return stats, emotion_pie, emotion_timeline, topic_heatmap, live_tweets
@@ -173,7 +155,6 @@ class EmotionDashboard:
         """
         Create statistics row with key metrics using real-time cumulative stats
         """
-        # Use real-time stats for cumulative totals
         total_tweets = real_time_stats.get('total_tweets_processed', len(df))
         total_high_confidence = real_time_stats.get('total_high_confidence', 0)
         avg_confidence = real_time_stats.get('avg_emotion_confidence', df['emotion_confidence'].mean() if not df.empty else 0)
@@ -230,13 +211,11 @@ class EmotionDashboard:
         """
         Create emotion distribution pie chart using cumulative data from all tweets
         """
-        # First try to get cumulative distribution from real-time stats
         cumulative_emotion_dist = real_time_stats.get('cumulative_emotion_distribution', {})
         
         if cumulative_emotion_dist:
             emotion_counts = pd.Series(cumulative_emotion_dist)
         else:
-            # Fallback: get emotion distribution from all tweets in the database
             try:
                 pipeline = [
                     {"$group": {"_id": "$dominant_emotion", "count": {"$sum": 1}}},
@@ -249,7 +228,6 @@ class EmotionDashboard:
                     counts = [item['count'] for item in emotion_aggregation if item['_id']]
                     emotion_counts = pd.Series(counts, index=emotions)
                 else:
-                    # Final fallback to current batch
                     current_batch_dist = real_time_stats.get('current_batch_emotion_distribution', {})
                     if current_batch_dist:
                         emotion_counts = pd.Series(current_batch_dist)
@@ -257,7 +235,6 @@ class EmotionDashboard:
                         emotion_counts = df['dominant_emotion'].value_counts()
             except Exception as e:
                 print(f"Error getting cumulative emotion distribution: {e}")
-                # Final fallback to dataframe
                 emotion_counts = df['dominant_emotion'].value_counts()
         
         colors = {

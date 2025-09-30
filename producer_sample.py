@@ -11,7 +11,6 @@ logging.basicConfig(level=logging.INFO)
 producer = KafkaProducer(bootstrap_servers='localhost:9092')
 topic_name = 'twitter'
 
-# Sample emotions and topics for realistic simulation
 EMOTIONS = ['joy', 'anger', 'fear', 'sadness', 'disgust', 'surprise', 'trust', 'anticipation']
 TOPICS = ['technology', 'sports', 'politics', 'entertainment', 'business', 'health', 'education', 'travel']
 LOCATIONS = ['New York', 'California', 'Texas', 'London', 'Tokyo', 'Delhi', 'Sydney', 'Toronto']
@@ -28,8 +27,7 @@ def simulate_emotion_metrics(prediction):
     """
     emotions = {}
     
-    if prediction == 1.0:  # Negative sentiment
-        # Higher probability for negative emotions
+    if prediction == 1.0:
         emotions['anger'] = random.uniform(0.3, 0.8)
         emotions['sadness'] = random.uniform(0.2, 0.6)
         emotions['fear'] = random.uniform(0.1, 0.4)
@@ -38,8 +36,7 @@ def simulate_emotion_metrics(prediction):
         emotions['trust'] = random.uniform(0.0, 0.3)
         emotions['surprise'] = random.uniform(0.1, 0.4)
         emotions['anticipation'] = random.uniform(0.1, 0.3)
-    else:  # Positive sentiment
-        # Higher probability for positive emotions
+    else:
         emotions['joy'] = random.uniform(0.4, 0.9)
         emotions['trust'] = random.uniform(0.3, 0.7)
         emotions['anticipation'] = random.uniform(0.2, 0.6)
@@ -49,7 +46,6 @@ def simulate_emotion_metrics(prediction):
         emotions['fear'] = random.uniform(0.0, 0.1)
         emotions['disgust'] = random.uniform(0.0, 0.1)
     
-    # Find dominant emotion
     dominant_emotion = max(emotions, key=emotions.get)
     
     return emotions, dominant_emotion
@@ -60,7 +56,6 @@ def send_sample_data():
     """
     data_dir = 'locally_saved_results'
     
-    # Get all JSON files in the directory
     json_files = [f for f in os.listdir(data_dir) if f.endswith('.json')]
     
     for json_file in json_files:
@@ -72,13 +67,8 @@ def send_sample_data():
                 for line in f:
                     original_data = json.loads(line.strip())
                     
-                    # Reconstruct original text
                     original_text = reconstruct_original_text(original_data['cleaned_data'])
-                    
-                    # Generate emotion analysis
                     emotions, dominant_emotion = simulate_emotion_metrics(original_data['prediction'])
-                    
-                    # Enhanced data structure
                     enhanced_data = {
                         'tweet_id': str(uuid.uuid4()),
                         'timestamp': datetime.now().isoformat(),
@@ -97,7 +87,7 @@ def send_sample_data():
                     
                     print(f"Sending tweet: {original_text[:50]}... | Emotion: {dominant_emotion}")
                     producer.send(topic_name, value=json.dumps(enhanced_data).encode('utf-8'))
-                    time.sleep(1)  # Slower for demo purposes
+                    time.sleep(1)
                     
         except Exception as e:
             print(f"Error reading {json_file}: {e}")
