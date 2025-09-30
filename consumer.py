@@ -8,9 +8,17 @@ from pyspark.sql.types import StructType, StructField, StringType, ArrayType
 
 if __name__ == "__main__":
     findspark.init()
-
+    
+    import os
+    from pyspark import SparkFiles
+    
     # Path to the pre-trained model
-    path_to_model = r'./pre_trained_model'
+    # In cluster mode with --archives, the model is extracted to the working directory
+    # Try distributed path first, fallback to local path
+    if os.path.exists('./pre_trained_model'):
+        path_to_model = './pre_trained_model'  # Distributed mode
+    else:
+        path_to_model = './pre_trained_model'  # Local mode (same path)
 
     # Config
     spark = SparkSession \
