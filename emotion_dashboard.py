@@ -205,22 +205,22 @@ class EmotionDashboard:
         stats = [
             html.Div([
                 html.H2(f"{total_tweets:,}", style={'margin': '0', 'color': '#3498db', 'fontSize': '2em'}),
-                html.P("🔢 Total Tweets", style={'margin': '0', 'fontSize': '14px', 'fontWeight': 'bold'})
+                html.P("Total Tweets", style={'margin': '0', 'fontSize': '14px', 'fontWeight': 'bold'})
             ], style={'textAlign': 'center', 'backgroundColor': 'white', 'padding': '20px', 'borderRadius': '8px', 'boxShadow': '0 2px 4px rgba(0,0,0,0.1)', 'width': '22%', 'display': 'inline-block', 'margin': '1%'}),
             
             html.Div([
                 html.H2(f"{avg_confidence:.3f}", style={'margin': '0', 'color': '#2ecc71', 'fontSize': '2em'}),
-                html.P("🎯 Avg Confidence", style={'margin': '0', 'fontSize': '14px', 'fontWeight': 'bold'})
+                html.P("Avg Confidence", style={'margin': '0', 'fontSize': '14px', 'fontWeight': 'bold'})
             ], style={'textAlign': 'center', 'backgroundColor': 'white', 'padding': '20px', 'borderRadius': '8px', 'boxShadow': '0 2px 4px rgba(0,0,0,0.1)', 'width': '22%', 'display': 'inline-block', 'margin': '1%'}),
             
             html.Div([
                 html.H2(most_common_emotion.title(), style={'margin': '0', 'color': '#e74c3c', 'fontSize': '1.8em'}),
-                html.P("🏆 Top Emotion", style={'margin': '0', 'fontSize': '14px', 'fontWeight': 'bold'})
+                html.P("Top Emotion", style={'margin': '0', 'fontSize': '14px', 'fontWeight': 'bold'})
             ], style={'textAlign': 'center', 'backgroundColor': 'white', 'padding': '20px', 'borderRadius': '8px', 'boxShadow': '0 2px 4px rgba(0,0,0,0.1)', 'width': '22%', 'display': 'inline-block', 'margin': '1%'}),
             
             html.Div([
                 html.H2(f"{total_high_confidence:,}", style={'margin': '0', 'color': '#f39c12', 'fontSize': '2em'}),
-                html.P("⭐ High Confidence", style={'margin': '0', 'fontSize': '14px', 'fontWeight': 'bold'})
+                html.P("High Confidence", style={'margin': '0', 'fontSize': '14px', 'fontWeight': 'bold'})
             ], style={'textAlign': 'center', 'backgroundColor': 'white', 'padding': '20px', 'borderRadius': '8px', 'boxShadow': '0 2px 4px rgba(0,0,0,0.1)', 'width': '22%', 'display': 'inline-block', 'margin': '1%'})
         ]
         
