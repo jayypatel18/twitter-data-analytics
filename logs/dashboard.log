@@ -1,0 +1,12 @@
+🚀 Starting Twitter Emotion Dashboard...
+📊 Dashboard available at: http://localhost:8050
+🎭 Features: Real-time emotion detection, live feed, interactive charts
+Traceback (most recent call last):
+  File "/Users/jaypatel/pyspark-etl-twitter/emotion_dashboard.py", line 295, in <module>
+    dashboard.run(debug=True)
+  File "/Users/jaypatel/pyspark-etl-twitter/emotion_dashboard.py", line 291, in run
+    self.app.run_server(debug=debug, port=port, host='0.0.0.0')
+    ^^^^^^^^^^^^^^^^^^^
+  File "/Users/jaypatel/pyspark-etl-twitter/venv/lib/python3.11/site-packages/dash/_obsolete.py", line 22, in __getattr__
+    raise err.exc(err.message)
+dash.exceptions.ObsoleteAttributeException: app.run_server has been replaced by app.run
