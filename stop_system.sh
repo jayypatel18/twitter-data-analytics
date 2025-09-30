@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "🛑 Stopping Twitter Emotion Analysis System"
+echo " Stopping Twitter Emotion Analysis System"
 echo "==========================================="
 
 # Function to stop a component
@@ -11,16 +11,16 @@ stop_component() {
     if [ -f "$pid_file" ]; then
         local pid=$(cat $pid_file)
         if ps -p $pid > /dev/null 2>&1; then
-            echo "🛑 Stopping $component (PID: $pid)..."
+            echo " Stopping $component (PID: $pid)..."
             kill $pid
             rm $pid_file
             echo "✓ $component stopped"
         else
-            echo "⚠️  $component was not running"
+            echo "  $component was not running"
             rm $pid_file
         fi
     else
-        echo "⚠️  No PID file found for $component"
+        echo "  No PID file found for $component"
     fi
 }
 
