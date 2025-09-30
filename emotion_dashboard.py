@@ -14,6 +14,7 @@ class EmotionDashboard:
         self.mongo_client = MongoClient('mongodb://localhost:27017/')
         self.db = self.mongo_client['twitter_emotions']
         self.collection = self.db['emotion_analysis']
+        self.stats_collection = self.db['real_time_stats']  # Collection for real-time stats
         
         # Initialize Dash app
         self.app = dash.Dash(__name__)
@@ -22,7 +23,7 @@ class EmotionDashboard:
     
     def get_latest_data(self, limit=100):
         """
-        Get latest emotion data from MongoDB
+        Get latest emotion data from MongoDB for visualizations
         """
         try:
             cursor = self.collection.find().sort("timestamp", -1).limit(limit)
@@ -43,6 +44,36 @@ class EmotionDashboard:
         except Exception as e:
             print(f"Error fetching data: {e}")
             return pd.DataFrame()
+    
+    def get_real_time_stats(self):
+        """
+        Get real-time cumulative statistics from MongoDB
+        """
+        try:
+            stats_doc = self.stats_collection.find_one({"stats_type": "current"})
+            if stats_doc:
+                return stats_doc
+            else:
+                # Fallback to counting all documents if no real-time stats
+                total_count = self.collection.count_documents({})
+                return {
+                    "total_tweets_processed": total_count,
+                    "total_high_confidence": 0,
+                    "emotion_distribution": {},
+                    "sentiment_distribution": {},
+                    "avg_emotion_confidence": 0.0,
+                    "most_emotional_tweet": {"emotion": "unknown", "confidence": 0.0, "text": ""}
+                }
+        except Exception as e:
+            print(f"Error fetching real-time stats: {e}")
+            return {
+                "total_tweets_processed": 0,
+                "total_high_confidence": 0,
+                "emotion_distribution": {},
+                "sentiment_distribution": {},
+                "avg_emotion_confidence": 0.0,
+                "most_emotional_tweet": {"emotion": "unknown", "confidence": 0.0, "text": ""}
+            }
     
     def setup_layout(self):
         """
@@ -110,20 +141,24 @@ class EmotionDashboard:
             Output('live-tweets', 'children')
         ], [Input('interval-component', 'n_intervals')])
         def update_dashboard(n):
+            # Get latest data for visualizations
             df = self.get_latest_data()
+            
+            # Get real-time cumulative stats
+            real_time_stats = self.get_real_time_stats()
             
             if df.empty:
                 empty_fig = go.Figure()
                 empty_fig.add_annotation(text="No data available", showarrow=False, font=dict(size=20))
                 return [], empty_fig, empty_fig, empty_fig, [html.P("No tweets available", style={'textAlign': 'center', 'color': '#95a5a6'})]
             
-            # Stats Row
-            stats = self.create_stats_row(df)
+            # Stats Row (using real-time stats for totals)
+            stats = self.create_stats_row(df, real_time_stats)
             
-            # Emotion Pie Chart
-            emotion_pie = self.create_emotion_pie_chart(df)
+            # Emotion Pie Chart (using real-time stats for current batch distribution)
+            emotion_pie = self.create_emotion_pie_chart(df, real_time_stats)
             
-            # Emotion Timeline
+            # Emotion Timeline (using historical data)
             emotion_timeline = self.create_emotion_timeline(df)
             
             # Topic-Emotion Heatmap
@@ -134,44 +169,64 @@ class EmotionDashboard:
             
             return stats, emotion_pie, emotion_timeline, topic_heatmap, live_tweets
     
-    def create_stats_row(self, df):
+    def create_stats_row(self, df, real_time_stats):
         """
-        Create statistics row with key metrics
+        Create statistics row with key metrics using real-time cumulative stats
         """
-        total_tweets = len(df)
-        avg_confidence = df['emotion_confidence'].mean() if not df.empty else 0
-        most_common_emotion = df['dominant_emotion'].mode().iloc[0] if not df.empty else "N/A"
-        positive_ratio = (df['sentiment_label'] == 'positive').mean() * 100 if not df.empty else 0
+        # Use real-time stats for cumulative totals
+        total_tweets = real_time_stats.get('total_tweets_processed', len(df))
+        total_high_confidence = real_time_stats.get('total_high_confidence', 0)
+        avg_confidence = real_time_stats.get('avg_emotion_confidence', df['emotion_confidence'].mean() if not df.empty else 0)
+        
+        # Get most common emotion from current batch stats or fallback to df
+        emotion_dist = real_time_stats.get('emotion_distribution', {})
+        if emotion_dist:
+            most_common_emotion = max(emotion_dist.keys(), key=emotion_dist.get)
+        else:
+            most_common_emotion = df['dominant_emotion'].mode().iloc[0] if not df.empty else "N/A"
+        
+        # Calculate positive ratio from current batch stats or fallback to df
+        sentiment_dist = real_time_stats.get('sentiment_distribution', {})
+        if sentiment_dist:
+            total_sentiment = sum(sentiment_dist.values())
+            positive_ratio = (sentiment_dist.get('positive', 0) / total_sentiment * 100) if total_sentiment > 0 else 0
+        else:
+            positive_ratio = (df['sentiment_label'] == 'positive').mean() * 100 if not df.empty else 0
         
         stats = [
             html.Div([
-                html.H2(f"{total_tweets}", style={'margin': '0', 'color': '#3498db'}),
-                html.P("Total Tweets", style={'margin': '0', 'fontSize': '14px'})
+                html.H2(f"{total_tweets:,}", style={'margin': '0', 'color': '#3498db', 'fontSize': '2em'}),
+                html.P("🔢 Total Tweets", style={'margin': '0', 'fontSize': '14px', 'fontWeight': 'bold'})
             ], style={'textAlign': 'center', 'backgroundColor': 'white', 'padding': '20px', 'borderRadius': '8px', 'boxShadow': '0 2px 4px rgba(0,0,0,0.1)', 'width': '22%', 'display': 'inline-block', 'margin': '1%'}),
             
             html.Div([
-                html.H2(f"{avg_confidence:.2f}", style={'margin': '0', 'color': '#2ecc71'}),
-                html.P("Avg Confidence", style={'margin': '0', 'fontSize': '14px'})
+                html.H2(f"{avg_confidence:.3f}", style={'margin': '0', 'color': '#2ecc71', 'fontSize': '2em'}),
+                html.P("🎯 Avg Confidence", style={'margin': '0', 'fontSize': '14px', 'fontWeight': 'bold'})
             ], style={'textAlign': 'center', 'backgroundColor': 'white', 'padding': '20px', 'borderRadius': '8px', 'boxShadow': '0 2px 4px rgba(0,0,0,0.1)', 'width': '22%', 'display': 'inline-block', 'margin': '1%'}),
             
             html.Div([
-                html.H2(most_common_emotion.title(), style={'margin': '0', 'color': '#e74c3c'}),
-                html.P("Top Emotion", style={'margin': '0', 'fontSize': '14px'})
+                html.H2(most_common_emotion.title(), style={'margin': '0', 'color': '#e74c3c', 'fontSize': '1.8em'}),
+                html.P("🏆 Top Emotion", style={'margin': '0', 'fontSize': '14px', 'fontWeight': 'bold'})
             ], style={'textAlign': 'center', 'backgroundColor': 'white', 'padding': '20px', 'borderRadius': '8px', 'boxShadow': '0 2px 4px rgba(0,0,0,0.1)', 'width': '22%', 'display': 'inline-block', 'margin': '1%'}),
             
             html.Div([
-                html.H2(f"{positive_ratio:.1f}%", style={'margin': '0', 'color': '#f39c12'}),
-                html.P("Positive Sentiment", style={'margin': '0', 'fontSize': '14px'})
+                html.H2(f"{total_high_confidence:,}", style={'margin': '0', 'color': '#f39c12', 'fontSize': '2em'}),
+                html.P("⭐ High Confidence", style={'margin': '0', 'fontSize': '14px', 'fontWeight': 'bold'})
             ], style={'textAlign': 'center', 'backgroundColor': 'white', 'padding': '20px', 'borderRadius': '8px', 'boxShadow': '0 2px 4px rgba(0,0,0,0.1)', 'width': '22%', 'display': 'inline-block', 'margin': '1%'})
         ]
         
         return stats
     
-    def create_emotion_pie_chart(self, df):
+    def create_emotion_pie_chart(self, df, real_time_stats):
         """
-        Create emotion distribution pie chart
+        Create emotion distribution pie chart using real-time stats
         """
-        emotion_counts = df['dominant_emotion'].value_counts()
+        # Use real-time stats for current batch distribution, fallback to df
+        emotion_dist = real_time_stats.get('emotion_distribution', {})
+        if emotion_dist:
+            emotion_counts = pd.Series(emotion_dist)
+        else:
+            emotion_counts = df['dominant_emotion'].value_counts()
         
         colors = {
             'joy': '#f1c40f', 'anger': '#e74c3c', 'fear': '#9b59b6',

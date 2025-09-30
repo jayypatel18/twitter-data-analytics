@@ -97,7 +97,7 @@ def send_sample_data():
                     
                     print(f"Sending tweet: {original_text[:50]}... | Emotion: {dominant_emotion}")
                     producer.send(topic_name, value=json.dumps(enhanced_data).encode('utf-8'))
-                    time.sleep(2)  # Slower for demo purposes
+                    time.sleep(0.01)  # Slower for demo purposes
                     
         except Exception as e:
             print(f"Error reading {json_file}: {e}")

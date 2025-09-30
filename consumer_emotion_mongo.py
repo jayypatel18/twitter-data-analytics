@@ -2,6 +2,7 @@ import os
 import re
 import json
 import findspark
+from datetime import datetime
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import from_json, udf, col, current_timestamp, lit
 from pyspark.sql.types import StructType, StructField, StringType, FloatType, MapType, IntegerType
@@ -28,6 +29,7 @@ class EmotionAnalysisConsumer:
         self.mongo_client = MongoClient(f'mongodb://{mongo_host}:{mongo_port}/')
         self.db = self.mongo_client['twitter_emotions']
         self.collection = self.db['emotion_analysis']
+        self.stats_collection = self.db['real_time_stats']  # Collection for dashboard stats
         
         # Spark Session
         self.spark = SparkSession \
@@ -122,11 +124,68 @@ class EmotionAnalysisConsumer:
                     print(f"  Text: {most_emotional['original_text'][:100]}...")
                 
                 print("="*50 + "\n")
+                
+                # Store real-time stats for dashboard
+                self.update_dashboard_stats(pandas_df, epoch_id)
             else:
                 print(f"\n⚠️  No data received in batch {epoch_id} - waiting for producer data...")
                 
         except Exception as e:
             logger.error(f"Error in emotion trend analysis: {e}")
+    
+    def update_dashboard_stats(self, pandas_df, epoch_id):
+        """
+        Update real-time statistics in MongoDB for dashboard consumption
+        """
+        try:
+            # Helper function to convert numpy types to Python types
+            def convert_numpy_types(obj):
+                if hasattr(obj, 'item'):  # numpy scalar
+                    return obj.item()
+                elif isinstance(obj, dict):
+                    return {k: convert_numpy_types(v) for k, v in obj.items()}
+                elif isinstance(obj, list):
+                    return [convert_numpy_types(item) for item in obj]
+                else:
+                    return obj
+            
+            # Create comprehensive stats document
+            stats_doc = {
+                "timestamp": datetime.now(),
+                "batch_id": int(epoch_id),
+                "batch_size": int(len(pandas_df)),
+                "total_tweets_processed": int(self.total_tweets_processed),
+                "total_high_confidence": int(self.total_high_confidence),
+                
+                # Current batch emotion distribution (convert numpy int64 to Python int)
+                "emotion_distribution": {k: int(v) for k, v in pandas_df['dominant_emotion'].value_counts().to_dict().items()},
+                "sentiment_distribution": {k: int(v) for k, v in pandas_df['sentiment_label'].value_counts().to_dict().items()},
+                
+                # High confidence emotions in current batch
+                "high_confidence_emotions": int(len(pandas_df[pandas_df['emotion_confidence'] > 0.7])),
+                
+                # Average emotion confidence (convert numpy float to Python float)
+                "avg_emotion_confidence": float(pandas_df['emotion_confidence'].mean()) if not pandas_df.empty else 0.0,
+                
+                # Most emotional tweet info
+                "most_emotional_tweet": {
+                    "emotion": str(pandas_df.loc[pandas_df['emotion_confidence'].idxmax(), 'dominant_emotion']) if not pandas_df.empty else 'unknown',
+                    "confidence": float(pandas_df['emotion_confidence'].max()) if not pandas_df.empty else 0.0,
+                    "text": str(pandas_df.loc[pandas_df['emotion_confidence'].idxmax(), 'original_text'][:100]) if not pandas_df.empty else ''
+                }
+            }
+            
+            # Use upsert to replace the current stats (keeping only latest)
+            self.stats_collection.replace_one(
+                {"stats_type": "current"}, 
+                {**stats_doc, "stats_type": "current"}, 
+                upsert=True
+            )
+            
+            logger.info(f"Updated dashboard stats for batch {epoch_id} - Total tweets: {self.total_tweets_processed}")
+            
+        except Exception as e:
+            logger.error(f"Error updating dashboard stats: {e}")
     
     def start_processing(self):
         """
