@@ -82,7 +82,7 @@ class EmotionDashboard:
         self.app.layout = html.Div([
             # Header
             html.Div([
-                html.H1("🎭 Real-time Twitter Emotion Analysis Dashboard", 
+                html.H1("Real-time Twitter Emotion Analysis Dashboard", 
                        style={'textAlign': 'center', 'color': '#2c3e50', 'marginBottom': '30px'}),
                 html.P("Advanced emotion detection beyond basic sentiment analysis", 
                       style={'textAlign': 'center', 'fontSize': '18px', 'color': '#7f8c8d'})
@@ -97,26 +97,26 @@ class EmotionDashboard:
                 html.Div([
                     # Emotion Distribution Pie Chart
                     html.Div([
-                        html.H3("🎯 Emotion Distribution", style={'textAlign': 'center'}),
+                        html.H3("Emotion Distribution", style={'textAlign': 'center'}),
                         dcc.Graph(id='emotion-pie-chart')
                     ], style={'backgroundColor': 'white', 'padding': '15px', 'marginBottom': '20px', 'borderRadius': '8px', 'boxShadow': '0 2px 4px rgba(0,0,0,0.1)'}),
                     
                     # Emotion Timeline
                     html.Div([
-                        html.H3("📈 Emotion Timeline", style={'textAlign': 'center'}),
+                        html.H3("Emotion Timeline", style={'textAlign': 'center'}),
                         dcc.Graph(id='emotion-timeline')
                     ], style={'backgroundColor': 'white', 'padding': '15px', 'marginBottom': '20px', 'borderRadius': '8px', 'boxShadow': '0 2px 4px rgba(0,0,0,0.1)'}),
                     
                     # Sentiment vs Emotion Heatmap
                     html.Div([
-                        html.H3("🌡️ Topic-Emotion Heatmap", style={'textAlign': 'center'}),
+                        html.H3("Topic-Emotion Heatmap", style={'textAlign': 'center'}),
                         dcc.Graph(id='topic-emotion-heatmap')
                     ], style={'backgroundColor': 'white', 'padding': '15px', 'borderRadius': '8px', 'boxShadow': '0 2px 4px rgba(0,0,0,0.1)'})
                 ], style={'width': '60%', 'display': 'inline-block', 'verticalAlign': 'top', 'paddingRight': '20px'}),
                 
                 # Right Column - Live Feed
                 html.Div([
-                    html.H3("🔴 Live Tweet Feed", style={'textAlign': 'center', 'color': '#e74c3c'}),
+                    html.H3("Live Tweet Feed", style={'textAlign': 'center', 'color': '#e74c3c'}),
                     html.Div(id='live-tweets', style={'height': '600px', 'overflowY': 'scroll'})
                 ], style={'width': '38%', 'display': 'inline-block', 'verticalAlign': 'top', 'backgroundColor': 'white', 'padding': '15px', 'borderRadius': '8px', 'boxShadow': '0 2px 4px rgba(0,0,0,0.1)'})
             ]),
@@ -358,9 +358,9 @@ class EmotionDashboard:
                       style={'margin': '5px 0', 'fontSize': '14px', 'lineHeight': '1.4'}),
                 
                 html.Div([
-                    html.Span(f"📍 {row['location']}", style={'fontSize': '12px', 'color': '#7f8c8d', 'marginRight': '10px'}),
-                    html.Span(f"🏷️ {row['topic']}", style={'fontSize': '12px', 'color': '#7f8c8d', 'marginRight': '10px'}),
-                    html.Span(f"⏰ {row['timestamp'].strftime('%H:%M:%S')}", style={'fontSize': '12px', 'color': '#7f8c8d'})
+                    html.Span(f"{row['location']}", style={'fontSize': '12px', 'color': '#7f8c8d', 'marginRight': '10px'}),
+                    html.Span(f"{row['topic']}", style={'fontSize': '12px', 'color': '#7f8c8d', 'marginRight': '10px'}),
+                    html.Span(f"{row['timestamp'].strftime('%H:%M:%S')}", style={'fontSize': '12px', 'color': '#7f8c8d'})
                 ])
             ], style={'padding': '10px', 'marginBottom': '10px', 'backgroundColor': '#f8f9fa', 'borderRadius': '8px', 'border': '1px solid #dee2e6'})
             
@@ -372,9 +372,9 @@ class EmotionDashboard:
         """
         Run the dashboard
         """
-        print("🚀 Starting Twitter Emotion Dashboard...")
-        print(f"📊 Dashboard available at: http://localhost:{port}")
-        print("🎭 Features: Real-time emotion detection, live feed, interactive charts")
+        print("****Starting Twitter Emotion Dashboard...")
+        print(f"----Dashboard available at: http://localhost:{port}")
+        print(">>>>Features: Real-time emotion detection, live feed, interactive charts")
         self.app.run(debug=debug, port=port, host='0.0.0.0')
 
 if __name__ == "__main__":
