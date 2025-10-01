@@ -1,14 +1,35 @@
 # Core dependencies
-pyspark>=3.1.2
+pyspark==3.5.6
 findspark
 decouple
 kafka-python
 delta-spark
-# For MongoDB support (used in consumer_mongo.py)
+
+# For MongoDB support
 pymongo
-# For Delta Lake support (used in consumer_delta.py)
+
+# For Delta Lake support
 delta-spark
-# For Kafka support (used in producer.py, consumer*.py)
-kafka-python
+
+# For Twitter API and Kafka
 tweepy
-dotenv
+kafka-python
+python-dotenv
+
+# For emotion analysis and NLP
+textblob
+vaderSentiment
+nltk
+numpy
+pandas
+
+# For real-time dashboard
+dash
+plotly
+flask
+flask-socketio
+
+# For data analysis
+scikit-learn
+matplotlib
+seaborn
