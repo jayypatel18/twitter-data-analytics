@@ -33,6 +33,6 @@ tar -czf pre_trained_model.tar.gz pre_trained_model/
 
 
 /opt/homebrew/Cellar/apache-spark1/3.5.6/bin/spark-submit \
-  --master spark://192.168.0.118:7077 \
+  --master spark://10.2.208.45:7077 \
   --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.6 \
   /Users/jaypatel/pyspark-etl-twitter/consumer_emotion_mongo.py
